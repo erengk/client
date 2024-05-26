@@ -1,13 +1,14 @@
 package com.example.client.employee;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
-@RequestMapping(path = "api/v1/employee")
+@RequestMapping(path = "employee", produces = "application/json; charset=UTF-8")
 public class EmployeeController {
 
     private final EmployeeService employeeService;
@@ -17,29 +18,37 @@ public class EmployeeController {
         this.employeeService = employeeService;
     }
 
-    @GetMapping
+    @GetMapping()
     public List<Employee> getEmployees() {
         return employeeService.getEmployees();
-
     }
 
+    @GetMapping(path = "{employeeId}", produces = "application/json; charset=UTF-8")
+    public ResponseEntity<Optional<Employee>> getEmployeeById(@PathVariable("employeeId") Long employeeId) {
+        Optional<Employee> employee = employeeService.getEmployeeById(employeeId);
+        if (employee != null) {
+            return ResponseEntity.ok().body(employee);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+
     @PostMapping
-    public void registerNewEmployee(@RequestBody Employee employee) {
+    public void addNewEmployee(@RequestBody Employee employee) {
         employeeService.addNewEmployee(employee);
     }
 
-    @DeleteMapping(path = "{employeeId}")
-    public void deleteEmployee(@PathVariable("{employeeId}") Long employeeId) {
+    @DeleteMapping(path = "{employeeId}", produces = "application/json; charset=UTF-8")
+    public void deleteEmployee(@PathVariable("employeeId") Long employeeId) {
         employeeService.deleteEmployee(employeeId);
     }
 
-    @PutMapping(path = "{employeeId}")
+    @PutMapping(path = "{employeeId}", produces = "application/json; charset=UTF-8")
     public void updateEmployee(
             @PathVariable("employeeId") Long employeeId,
-            @RequestParam (required = false) String name,
+            @RequestParam(required = false) String name,
             @RequestParam(required = false) String email) {
-
         employeeService.updateEmployee(employeeId, name, email);
-
     }
 }
