@@ -4,6 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -46,24 +48,36 @@ public class EmployeeService {
     }
 
     @Transactional
-    public void updateEmployee(Long employeeId, String name, String email) {
-        try {
-            Employee employee = employeeRepository.findById(employeeId).orElseThrow(() -> new IllegalStateException("Employee not found: " + employeeId));
+    public void updateEmployee(Long employeeId, String name, String email, String dob) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new IllegalStateException("Employee not found: " + employeeId));
 
-            if (name != null && name.length() > 0 && !Objects.equals(employee.getName(), name)){
-                employee.setName(name);
-            }
-            if (email != null && email.length() > 0 && !Objects.equals(employee.getEmail(), email)){
-                Optional<Employee> employeeOptional = employeeRepository.findEmployeeByEmail(email);
-                if (employeeOptional.isPresent()){
-                    throw new IllegalStateException("Employee already exists: email: " + email);
-                }
-                employee.setEmail(email);
-            }
-        } catch (Exception e) {
-
-            e.printStackTrace();
-            throw e;
+        // İsmi güncelle
+        if (name != null && !name.trim().isEmpty() && !Objects.equals(employee.getName(), name)) {
+            employee.setName(name);
         }
+
+        // Email'i güncelle
+        if (email != null && !email.trim().isEmpty() && !Objects.equals(employee.getEmail(), email)) {
+            Optional<Employee> employeeOptional = employeeRepository.findEmployeeByEmail(email);
+            if (employeeOptional.isPresent()) {
+                throw new IllegalStateException("Employee already exists with email: " + email);
+            }
+            employee.setEmail(email);
+        }
+
+        // Doğum tarihini güncelle
+        if (dob != null && !dob.trim().isEmpty()) {
+            try {
+                LocalDate parsedDob = LocalDate.parse(dob);
+                if (!Objects.equals(employee.getDob(), parsedDob)) {
+                    employee.setDob(parsedDob);
+                }
+            } catch (DateTimeParseException e) {
+                throw new IllegalArgumentException("Invalid date format for dob: " + dob);
+            }
+        }
+        // Güncellenmiş çalışanı kaydet
+        employeeRepository.save(employee);
     }
 }

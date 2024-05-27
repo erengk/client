@@ -26,13 +26,12 @@ public class EmployeeController {
     @GetMapping(path = "{employeeId}", produces = "application/json; charset=UTF-8")
     public ResponseEntity<Optional<Employee>> getEmployeeById(@PathVariable("employeeId") Long employeeId) {
         Optional<Employee> employee = employeeService.getEmployeeById(employeeId);
-        if (employee != null) {
+        if (employee.isPresent()) {
             return ResponseEntity.ok().body(employee);
         } else {
             return ResponseEntity.notFound().build();
         }
     }
-
 
     @PostMapping
     public void addNewEmployee(@RequestBody Employee employee) {
@@ -45,10 +44,45 @@ public class EmployeeController {
     }
 
     @PutMapping(path = "{employeeId}", produces = "application/json; charset=UTF-8")
-    public void updateEmployee(
+    public ResponseEntity<String> updateEmployee(
             @PathVariable("employeeId") Long employeeId,
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) String email) {
-        employeeService.updateEmployee(employeeId, name, email);
+            @RequestBody EmployeeUpdateRequest request) {
+        try {
+            employeeService.updateEmployee(employeeId, request.getName(), request.getEmail(), request.getDob());
+            return ResponseEntity.ok("Employee updated successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("An error occurred while updating the employee: " + e.getMessage());
+        }
+    }
+}
+
+class EmployeeUpdateRequest {
+    private String name;
+    private String email;
+    private String dob;
+
+    // Getters and setters
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getDob() {
+        return dob;
+    }
+
+    public void setDob(String dob) {
+        this.dob = dob;
     }
 }
